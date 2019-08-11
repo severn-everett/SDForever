@@ -1,0 +1,77 @@
+Feature: Validating the functionality of the Charger App
+
+  @Positive
+  Scenario: User initializes charging sessions for different stations
+    When I create charging sessions with the following parameters:
+      | stationId |
+      | abc-11111 |
+      | abc-22222 |
+      | abc-33333 |
+      | abc-44444 |
+      | abc-55555 |
+    And I wait 1 second
+
+    Then there should be 5 responses of status code 200
+    And there should be the following amount of created sessions:
+      | stationId | count |
+      | abc-11111 | 1     |
+      | abc-22222 | 1     |
+      | abc-33333 | 1     |
+      | abc-44444 | 1     |
+      | abc-55555 | 1     |
+
+    When I stop the charging sessions with the following station ids:
+      | stationId |
+      | abc-11111 |
+      | abc-22222 |
+    And I wait 1 second
+    Then there should be 7 responses of status code 200
+    And there should be the following amount of stopped sessions:
+      | stationId | count |
+      | abc-11111 | 1     |
+      | abc-22222 | 1     |
+      | abc-33333 | 0     |
+      | abc-44444 | 0     |
+      | abc-55555 | 0     |
+
+    When I request the list of all sessions
+    Then there should be a list of 5 sessions
+
+    When I request the summary of the sessions
+    Then I should get a summary with the following statistics:
+      | startedCount | stoppedCount | totalCount |
+      | 5            | 2            | 7          |
+
+  @Positive
+  Scenario: User initializes charging sessions for the same station
+    When I create charging sessions with the following parameters:
+      | stationId |
+      | abc-11111 |
+      | abc-11111 |
+      | abc-22222 |
+      | abc-22222 |
+    And I wait 1 second
+
+    Then there should be 4 responses of status code 200
+    And there should be the following amount of created sessions:
+      | stationId | count |
+      | abc-11111 | 2     |
+      | abc-22222 | 2     |
+
+    When I stop the charging sessions with the following station ids:
+      | stationId |
+      | abc-11111 |
+    And I wait 1 second
+    Then there should be 6 responses of status code 200
+    And there should be the following amount of stopped sessions:
+      | stationId | count |
+      | abc-11111 | 2     |
+      | abc-22222 | 0     |
+
+    When I request the list of all sessions
+    Then there should be a list of 4 sessions
+
+    When I request the summary of the sessions
+    Then I should get a summary with the following statistics:
+      | startedCount | stoppedCount | totalCount |
+      | 4            | 2            | 6          |

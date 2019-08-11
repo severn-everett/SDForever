@@ -1,16 +1,27 @@
 package com.severett.chargerapp.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
-public final class ChargingSession {
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
-    private final UUID id;
-    private final String stationId;
+public class ChargingSession {
+
+    private UUID id;
+    private String stationId;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS", timezone = "UTC")
     private Instant startedAt;
+    @JsonInclude(NON_NULL)
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS", timezone = "UTC")
     private Instant stoppedAt;
     private Status status;
+
+    public ChargingSession() {
+    }
 
     public ChargingSession(UUID id, String stationId, Instant startedAt) {
         this.id = id;
@@ -23,20 +34,40 @@ public final class ChargingSession {
         return id;
     }
 
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
     public String getStationId() {
         return stationId;
+    }
+
+    public void setStationId(String stationId) {
+        this.stationId = stationId;
     }
 
     public Status getStatus() {
         return status;
     }
 
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
     public Instant getStartedAt() {
         return startedAt;
     }
 
+    public void setStartedAt(Instant startedAt) {
+        this.startedAt = startedAt;
+    }
+
     public Instant getStoppedAt() {
         return stoppedAt;
+    }
+
+    public void setStoppedAt(Instant stoppedAt) {
+        this.stoppedAt = stoppedAt;
     }
 
     public void stopCharging(Instant stoppedAt) {

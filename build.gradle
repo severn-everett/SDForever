@@ -29,11 +29,15 @@ test {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    testImplementation 'io.cucumber:cucumber-java8:4.7.1'
+    testImplementation 'io.cucumber:cucumber-junit:4.7.1'
+    testImplementation 'io.cucumber:cucumber-spring:4.7.1'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.1'
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.5.1'
     testImplementation 'org.junit.platform:junit-platform-commons:1.5.1'
     testImplementation 'org.junit.platform:junit-platform-engine:1.5.1'
     testImplementation 'org.junit.vintage:junit-vintage-engine:5.5.1'
     testImplementation 'org.mockito:mockito-core:3.0.0'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.5.1'
 }

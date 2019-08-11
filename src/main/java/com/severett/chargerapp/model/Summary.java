@@ -1,11 +1,17 @@
 package com.severett.chargerapp.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.Objects;
 
-public final class Summary {
+@JsonIgnoreProperties(value={ "totalCount" }, allowGetters=true)
+public class Summary {
 
-    private final long startedCount;
-    private final long stoppedCount;
+    private long startedCount;
+    private long stoppedCount;
+
+    public Summary() {
+    }
 
     public Summary(long startedCount, long stoppedCount) {
         this.startedCount = startedCount;
@@ -16,8 +22,16 @@ public final class Summary {
         return startedCount;
     }
 
+    public void setStartedCount(long startedCount) {
+        this.startedCount = startedCount;
+    }
+
     public long getStoppedCount() {
         return stoppedCount;
+    }
+
+    public void setStoppedCount(long stoppedCount) {
+        this.stoppedCount = stoppedCount;
     }
 
     public long getTotalCount() {

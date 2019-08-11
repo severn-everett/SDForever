@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.annotation.DirtiesContext;
@@ -26,6 +25,7 @@ import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
@@ -83,13 +83,15 @@ public class StepDefinitions implements En {
                                 responseCounter.compute(
                                         response.getStatus(), (key, value) -> value != null ? value + 1 : 1
                                 );
-                                ChargingSession session = objectMapper.readValue(
-                                        response.getContentAsString(), ChargingSession.class
-                                );
-                                createdSessionsMap.computeIfAbsent(
-                                        session.getStationId(),
-                                        (stationId) -> new ArrayList<>()
-                                ).add(session);
+                                if (response.getStatus() == SC_OK) {
+                                    ChargingSession session = objectMapper.readValue(
+                                            response.getContentAsString(), ChargingSession.class
+                                    );
+                                    createdSessionsMap.computeIfAbsent(
+                                            session.getStationId(),
+                                            (stationId) -> new ArrayList<>()
+                                    ).add(session);
+                                }
                             });
                 } catch (Exception e) {
                     fail(e);
@@ -97,7 +99,7 @@ public class StepDefinitions implements En {
             });
         });
 
-        When("I stop the charging sessions with the following station ids:", (DataTable rows) -> {
+        When("I stop the charging session(s) with the following station id(s):", (DataTable rows) -> {
             List<Map<String, String>> paramsList = rows.asMaps();
             paramsList.forEach(requestParams -> {
                 String stationId = requestParams.get("stationId");
@@ -117,13 +119,15 @@ public class StepDefinitions implements En {
                             responseCounter.compute(
                                     response.getStatus(), (key, value) -> value != null ? value + 1 : 1
                             );
-                            ChargingSession session = objectMapper.readValue(
-                                    response.getContentAsString(), ChargingSession.class
-                            );
-                            stoppedSessionsMap.computeIfAbsent(
-                                    session.getStationId(),
-                                    (givenId) -> new ArrayList<>()
-                            ).add(session);
+                            if (response.getStatus() == SC_OK) {
+                                ChargingSession session = objectMapper.readValue(
+                                        response.getContentAsString(), ChargingSession.class
+                                );
+                                stoppedSessionsMap.computeIfAbsent(
+                                        session.getStationId(),
+                                        (givenId) -> new ArrayList<>()
+                                ).add(session);
+                            }
                         });
                     } catch (Exception e) {
                         fail(e);
@@ -135,7 +139,7 @@ public class StepDefinitions implements En {
         When("I request the list of all sessions", () -> {
             MockHttpServletResponse getListResponse =
                     mvc.perform(get(URI.create("/chargingSessions"))).andReturn().getResponse();
-            assertEquals(HttpStatus.OK.value(), getListResponse.getStatus());
+            assertEquals(SC_OK, getListResponse.getStatus());
             JsonNode responseContent = objectMapper.readTree(getListResponse.getContentAsString());
             responseContent.forEach(entry -> {
                 try {
@@ -149,15 +153,28 @@ public class StepDefinitions implements En {
         When("I request the summary of the sessions", () -> {
             MockHttpServletResponse getSummaryResponse =
                     mvc.perform(get(URI.create("/chargingSessions/summary"))).andReturn().getResponse();
-            assertEquals(HttpStatus.OK.value(), getSummaryResponse.getStatus());
+            assertEquals(SC_OK, getSummaryResponse.getStatus());
             summary = objectMapper.readValue(getSummaryResponse.getContentAsString(), Summary.class);
+        });
+
+        When("I create a charging session with no Station ID", () -> {
+            MockHttpServletResponse createResponse =
+                    mvc.perform(post(URI.create("/chargingSessions"))).andReturn().getResponse();
+            responseCounter.put(createResponse.getStatus(), 1);
+        });
+
+        When("I have a ficticious session with Station ID {string}", (String stationId) -> {
+            ChargingSession chargingSession = new ChargingSession();
+            chargingSession.setId(UUID.randomUUID());
+            chargingSession.setStationId(stationId);
+            createdSessionsMap.put(stationId, Collections.singletonList(chargingSession));
         });
 
         And("I wait {int} second(s)", (Integer amt) ->
             Thread.sleep(amt.longValue() * 1000L)
         );
 
-        Then("there should be {int} responses of status code {int}", (Integer expectedCount, Integer codeNumber) -> {
+        Then("there should be {int} response(s) of status code {int}", (Integer expectedCount, Integer codeNumber) -> {
             int actualCount = responseCounter.getOrDefault(codeNumber, 0);
             assertEquals(
                     expectedCount,

@@ -75,3 +75,17 @@ Feature: Validating the functionality of the Charger App
     Then I should get a summary with the following statistics:
       | startedCount | stoppedCount | totalCount |
       | 4            | 2            | 6          |
+
+  @Negative
+  Scenario: Attempting to create a session with no Station ID
+    When I create a charging session with no Station ID
+    Then there should be 1 response of status code 400
+
+  @Negative
+  Scenario: Attempt to stop a session that does not exist
+    When I have a ficticious session with Station ID "bad-11111"
+    And I stop the charging sessions with the following station ids:
+      | stationId |
+      | bad-11111 |
+
+    Then there should be 1 response of status code 400

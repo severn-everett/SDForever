@@ -14,16 +14,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SessionStatisticsRepoTest {
 
+    // A group of timestamps that span ten seconds
     private Instant timestampOne = Instant.ofEpochSecond(1565516601L);
-    private Instant timestampTwo = Instant.ofEpochSecond(1565516602L);
-    private Instant timestampThree = Instant.ofEpochSecond(1565516603L);
-    private Instant timestampFour = Instant.ofEpochSecond(1565516604L);
-    private Instant timestampFive = Instant.ofEpochSecond(1565516605L);
-    private Instant timestampSix = Instant.ofEpochSecond(1565516606L);
-    private Instant timestampSeven = Instant.ofEpochSecond(1565516607L);
-    private Instant timestampEight = Instant.ofEpochSecond(1565516608L);
-    private Instant timestampNine = Instant.ofEpochSecond(1565516609L);
-    private Instant timestampTen = Instant.ofEpochSecond(1565516610L);
+    private Instant timestampTwo = timestampOne.plusSeconds(1);
+    private Instant timestampThree = timestampTwo.plusSeconds(1);
+    private Instant timestampFour = timestampThree.plusSeconds(1);
+    private Instant timestampFive = timestampFour.plusSeconds(1);
+    private Instant timestampSix = timestampFive.plusSeconds(1);
+    private Instant timestampSeven = timestampSix.plusSeconds(1);
+    private Instant timestampEight = timestampSeven.plusSeconds(1);
+    private Instant timestampNine = timestampEight.plusSeconds(1);
+    private Instant timestampTen = timestampNine.plusSeconds(1);
     private List<Instant> timestampList = Arrays.asList(
             timestampOne, timestampTwo, timestampThree, timestampFour,
             timestampFive, timestampSix, timestampSeven, timestampEight,
@@ -67,10 +68,8 @@ class SessionStatisticsRepoTest {
                 sessionStatsAdded++;
             }
         }
-        long sessionStatCount = countProducer.apply(
-                timestampOne.minusSeconds(10), timestampOne.plusSeconds(49)
-        );
-        assertEquals(sessionStatsAdded, sessionStatCount);
+
+        checkCounts(countProducer, sessionStatsAdded);
     }
 
     private void testAsync(Consumer<Instant> timestampConsumer,
@@ -87,10 +86,23 @@ class SessionStatisticsRepoTest {
         for (Thread addThread : runThreadsList) {
             addThread.join();
         }
+        checkCounts(countProducer, runThreadsList.size());
+    }
+
+    private void checkCounts(
+            BiFunction<Instant, Instant, Long> countProducer,
+            int expectedFullCount
+    ) {
+        // Simulate a query that ranges a minute that begins with timestampOne
         long sessionStatCount = countProducer.apply(
-                timestampOne.minusSeconds(10), timestampOne.plusSeconds(49)
+                timestampOne, timestampOne.plusSeconds(59)
         );
-        assertEquals(runThreadsList.size(), sessionStatCount);
+        assertEquals(expectedFullCount, sessionStatCount);
+        // Simulate a query that ranges a minute that ends with timestampTwo
+        long pastSessionsStatCount = countProducer.apply(
+                timestampTwo.minusSeconds(59), timestampTwo
+        );
+        assertEquals(3, pastSessionsStatCount);
     }
 
 }

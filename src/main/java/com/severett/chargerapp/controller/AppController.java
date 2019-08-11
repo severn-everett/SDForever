@@ -81,7 +81,7 @@ public class AppController {
     public ResponseEntity<Summary> getSummary() {
         try {
             Instant toTimestamp = Instant.now();
-            Instant fromTimestamp = toTimestamp.minusSeconds(60L);
+            Instant fromTimestamp = toTimestamp.minusSeconds(59L);
             return ResponseEntity.ok(sessionService.getSummary(fromTimestamp, toTimestamp));
         } catch (Exception e) {
             logger.error("Exception encountered in getSummary():", e);

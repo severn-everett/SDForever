@@ -12,6 +12,10 @@ Feature: Validating the functionality of the Charger App
     And I wait 1 second
 
     Then there should be 5 responses of status code 200
+    # Note: The content of the responses is not fully tested due to the random
+    #       nature of the id and time values making it impossible to test in a
+    #       black-box test such as this; the generation of these values is
+    #       covered in the unit tests.
     And there should be the following amount of created sessions:
       | stationId | count |
       | abc-11111 | 1     |
@@ -26,6 +30,10 @@ Feature: Validating the functionality of the Charger App
       | abc-22222 |
     And I wait 1 second
     Then there should be 7 responses of status code 200
+    # Note: The content of the responses is not fully tested due to the random
+    #       nature of the id and time values making it impossible to test in a
+    #       black-box test such as this; the generation of these values is
+    #       covered in the unit tests.
     And there should be the following amount of stopped sessions:
       | stationId | count |
       | abc-11111 | 1     |
@@ -35,6 +43,10 @@ Feature: Validating the functionality of the Charger App
       | abc-55555 | 0     |
 
     When I request the list of all sessions
+    # Note: The content of the responses is not fully tested due to the random
+    #       nature of the id and time values making it impossible to test in a
+    #       black-box test such as this; the generation of these values is
+    #       covered in the unit tests.
     Then there should be a list of 5 sessions
 
     When I request the summary of the sessions
@@ -53,6 +65,10 @@ Feature: Validating the functionality of the Charger App
     And I wait 1 second
 
     Then there should be 4 responses of status code 200
+    # Note: The content of the responses is not fully tested due to the random
+    #       nature of the id and time values making it impossible to test in a
+    #       black-box test such as this; the generation of these values is
+    #       covered in the unit tests.
     And there should be the following amount of created sessions:
       | stationId | count |
       | abc-11111 | 2     |
@@ -63,12 +79,20 @@ Feature: Validating the functionality of the Charger App
       | abc-11111 |
     And I wait 1 second
     Then there should be 6 responses of status code 200
+    # Note: The content of the responses is not fully tested due to the random
+    #       nature of the id and time values making it impossible to test in a
+    #       black-box test such as this; the generation of these values is
+    #       covered in the unit tests.
     And there should be the following amount of stopped sessions:
       | stationId | count |
       | abc-11111 | 2     |
       | abc-22222 | 0     |
 
     When I request the list of all sessions
+    # Note: The content of the responses is not fully tested due to the random
+    #       nature of the id and time values making it impossible to test in a
+    #       black-box test such as this; the generation of these values is
+    #       covered in the unit tests.
     Then there should be a list of 4 sessions
 
     When I request the summary of the sessions

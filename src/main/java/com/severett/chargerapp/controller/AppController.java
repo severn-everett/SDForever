@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
@@ -36,7 +38,9 @@ public class AppController {
             @RequestBody ChargerRequest chargerRequest
     ) {
         try {
-            return ResponseEntity.ok(sessionService.createSession(chargerRequest.getStationId()));
+            return ResponseEntity.ok(sessionService.createSession(
+                    UUID.randomUUID(), chargerRequest.getStationId(), Instant.now())
+            );
         } catch (IllegalArgumentException iae) {
             logger.warn("Bad request received for submitChargingSession:", iae);
             return new ResponseEntity<>(BAD_REQUEST);
@@ -50,7 +54,7 @@ public class AppController {
     @RequestMapping(value = "/{id}", method = {PUT}, produces = {APPLICATION_JSON_VALUE})
     public ResponseEntity<ChargingSession> stopChargingSession(@PathVariable String id) {
         try {
-            ChargingSession stoppedSession = sessionService.stopSession(id);
+            ChargingSession stoppedSession = sessionService.stopSession(UUID.fromString(id), Instant.now());
             return stoppedSession != null ?
                     ResponseEntity.ok(stoppedSession) :
                     new ResponseEntity<>(BAD_REQUEST);
@@ -76,7 +80,9 @@ public class AppController {
     @RequestMapping(value = "/summary", method = {GET}, produces = {APPLICATION_JSON_VALUE})
     public ResponseEntity<Summary> getSummary() {
         try {
-            return ResponseEntity.ok(sessionService.getSummary());
+            Instant toTimestamp = Instant.now();
+            Instant fromTimestamp = toTimestamp.minusSeconds(60L);
+            return ResponseEntity.ok(sessionService.getSummary(fromTimestamp, toTimestamp));
         } catch (Exception e) {
             logger.error("Exception encountered in getSummary():", e);
             return new ResponseEntity<>(INTERNAL_SERVER_ERROR);

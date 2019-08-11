@@ -1,6 +1,7 @@
 package com.severett.chargerapp.model;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 public final class ChargingSession {
@@ -11,9 +12,10 @@ public final class ChargingSession {
     private Instant stoppedAt;
     private Status status;
 
-    public ChargingSession(UUID id, String stationId) {
+    public ChargingSession(UUID id, String stationId, Instant startedAt) {
         this.id = id;
         this.stationId = stationId;
+        this.startedAt = startedAt;
         this.status = Status.IN_PROGRESS;
     }
 
@@ -37,9 +39,25 @@ public final class ChargingSession {
         return stoppedAt;
     }
 
-    public void stopCharging() {
+    public void stopCharging(Instant stoppedAt) {
         status = Status.FINISHED;
-        stoppedAt = Instant.now();
+        this.stoppedAt = stoppedAt;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChargingSession that = (ChargingSession) o;
+        return id.equals(that.id) &&
+                stationId.equals(that.stationId) &&
+                startedAt.equals(that.startedAt) &&
+                Objects.equals(stoppedAt, that.stoppedAt) &&
+                status == that.status;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, stationId, startedAt, stoppedAt, status);
+    }
 }

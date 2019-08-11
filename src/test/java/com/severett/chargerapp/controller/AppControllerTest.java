@@ -4,20 +4,22 @@ import com.severett.chargerapp.model.ChargerRequest;
 import com.severett.chargerapp.model.ChargingSession;
 import com.severett.chargerapp.model.Summary;
 import com.severett.chargerapp.service.SessionService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.AdditionalMatchers.not;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.*;
 
 class AppControllerTest {
@@ -32,29 +34,30 @@ class AppControllerTest {
     private String stationOneId = "ABC-12345";
     private String stationTwoId = "ABC-54321";
 
-    private ChargingSession sessionOne = new ChargingSession(uuidOne, stationOneId);
-    private ChargingSession sessionTwo = new ChargingSession(uuidTwo, stationTwoId);
+    private Instant createdTimestamp = Instant.ofEpochSecond(1565516634L);
+
+    private ChargingSession sessionOne = new ChargingSession(uuidOne, stationOneId, createdTimestamp);
+    private ChargingSession sessionTwo = new ChargingSession(uuidTwo, stationTwoId, createdTimestamp);
 
     private List<ChargingSession> sessionsList = Arrays.asList(sessionOne, sessionTwo);
 
     private Summary summary = new Summary(2, 1);
 
     AppControllerTest() {
-        sessionTwo.stopCharging();
+        Instant stoppedTimestamp = createdTimestamp.plusSeconds(30L);
+        sessionTwo.stopCharging(stoppedTimestamp);
     }
 
     @BeforeEach
     void setup() {
         sessionService = Mockito.mock(SessionService.class);
 
-        Mockito.when(sessionService.createSession(null)).thenThrow(IllegalArgumentException.class);
-        Mockito.when(sessionService.createSession(stationOneId)).thenReturn(sessionOne);
-
-        Mockito.when(sessionService.stopSession(uuidTwo.toString())).thenReturn(sessionTwo);
-
-        Mockito.when(sessionService.getSessions()).thenReturn(sessionsList);
-
-        Mockito.when(sessionService.getSummary()).thenReturn(summary);
+        when(sessionService.createSession(any(UUID.class), eq(null), any(Instant.class)))
+                .thenThrow(IllegalArgumentException.class);
+        when(sessionService.createSession(any(UUID.class), eq(stationOneId), any(Instant.class))).thenReturn(sessionOne);
+        when(sessionService.stopSession(eq(uuidTwo), any(Instant.class))).thenReturn(sessionTwo);
+        when(sessionService.getSessions()).thenReturn(sessionsList);
+        when(sessionService.getSummary(any(Instant.class), any(Instant.class))).thenReturn(summary);
 
         appController = new AppController(sessionService);
     }
@@ -75,7 +78,7 @@ class AppControllerTest {
 
     @Test
     void failedSubmitChargingSession() {
-        Mockito.when(sessionService.createSession(anyString())).then(invocation -> {
+        when(sessionService.createSession(any(UUID.class), anyString(), any(Instant.class))).then(invocation -> {
             throw new Exception("Something bad happened");
         });
         ResponseEntity<ChargingSession> response =
@@ -91,7 +94,7 @@ class AppControllerTest {
 
     @Test
     void badStopSession() {
-        Mockito.when(sessionService.stopSession(not(eq(uuidTwo.toString()))))
+        when(sessionService.stopSession(not(eq(uuidTwo)), any(Instant.class)))
                 .thenThrow(IllegalArgumentException.class);
         ResponseEntity<ChargingSession> response = appController.stopChargingSession(uuidThree.toString());
         checkResponse(response, BAD_REQUEST, null);
@@ -99,7 +102,7 @@ class AppControllerTest {
 
     @Test
     void failedStopSession() {
-        Mockito.when(sessionService.stopSession(anyString())).then(invocation -> {
+        when(sessionService.stopSession(any(UUID.class), any(Instant.class))).then(invocation -> {
             throw new Exception("Something bad happened");
         });
         ResponseEntity<ChargingSession> response = appController.stopChargingSession(uuidTwo.toString());
@@ -114,7 +117,7 @@ class AppControllerTest {
 
     @Test
     void failedGetSessions() {
-        Mockito.when(sessionService.getSessions()).then(invocation -> {
+        when(sessionService.getSessions()).then(invocation -> {
             throw new Exception("Something bad happened");
         });
         ResponseEntity<List<ChargingSession>> response = appController.getChargingSessions();
@@ -129,7 +132,7 @@ class AppControllerTest {
 
     @Test
     void failedGetSummary() {
-        Mockito.when(sessionService.getSummary()).then(invocation -> {
+        when(sessionService.getSummary(any(Instant.class), any(Instant.class))).then(invocation -> {
             throw new Exception("Something bad happened");
         });
         ResponseEntity<Summary> response = appController.getSummary();
@@ -137,9 +140,9 @@ class AppControllerTest {
     }
 
     private <T> void checkResponse(ResponseEntity<T> response, HttpStatus expectedStatus, T expectedBody) {
-        Assertions.assertAll("Response Entity Verification",
-                () -> Assertions.assertEquals(expectedStatus, response.getStatusCode()),
-                () -> Assertions.assertEquals(expectedBody, response.getBody())
+        assertAll("Response Entity Verification",
+                () -> assertEquals(expectedStatus, response.getStatusCode()),
+                () -> assertEquals(expectedBody, response.getBody())
         );
     }
 

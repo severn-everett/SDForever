@@ -23,14 +23,13 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    public ChargingSession createSession(String stationId) {
+    public ChargingSession createSession(UUID id, String stationId, Instant timestamp) {
         if (stationId != null) {
-            ChargingSession newSession = chargingSessionRepo.save(
-                    new ChargingSession(UUID.randomUUID(), stationId)
-            );
+            ChargingSession newSession = new ChargingSession(id, stationId, timestamp);
+            chargingSessionRepo.save(newSession);
             // Notify stats repo of session start only after session has been
             // successfully persisted
-            sessionStatisticsRepo.addSessionStart(Instant.now());
+            sessionStatisticsRepo.addSessionStart(timestamp);
             return newSession;
         } else {
             throw new IllegalArgumentException("stationId must not be null");
@@ -38,18 +37,14 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    public ChargingSession stopSession(String id) {
-        if (id != null) {
-            return chargingSessionRepo.findById(UUID.fromString(id)).map(chargingSession -> {
-                chargingSession.stopCharging();
-                // Notify stats repo of session stop only after session has been
-                // successfully stopped
-                sessionStatisticsRepo.addSessionStop(Instant.now());
-                return chargingSession;
-            }).orElse(null);
-        } else {
-            throw new IllegalArgumentException("id must not be null");
-        }
+    public ChargingSession stopSession(UUID id, Instant timestamp) {
+        return chargingSessionRepo.findById(id).map(chargingSession -> {
+            chargingSession.stopCharging(timestamp);
+            // Notify stats repo of session stop only after session has been
+            // successfully stopped
+            sessionStatisticsRepo.addSessionStop(timestamp);
+            return chargingSessionRepo.save(chargingSession);
+        }).orElse(null);
     }
 
     @Override
@@ -60,11 +55,9 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    public Summary getSummary() {
-        Instant toTimestamp = Instant.now();
-        Instant fromTimestamp = toTimestamp.minusSeconds(60L);
+    public Summary getSummary(Instant fromTimestamp, Instant toTimestamp) {
         long sessionStartCount = sessionStatisticsRepo.getSessionStartCount(fromTimestamp, toTimestamp);
-        long sessionStopCount = sessionStatisticsRepo.getSessionStartCount(fromTimestamp, toTimestamp);
+        long sessionStopCount = sessionStatisticsRepo.getSessionStopCount(fromTimestamp, toTimestamp);
         return new Summary(sessionStartCount, sessionStopCount);
     }
 }

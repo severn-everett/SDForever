@@ -22,6 +22,7 @@ import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -164,9 +165,7 @@ public class StepDefinitions implements En {
         });
 
         When("I have a ficticious session with Station ID {string}", (String stationId) -> {
-            ChargingSession chargingSession = new ChargingSession();
-            chargingSession.setId(UUID.randomUUID());
-            chargingSession.setStationId(stationId);
+            ChargingSession chargingSession = new ChargingSession(UUID.randomUUID(), stationId, Instant.now());
             createdSessionsMap.put(stationId, Collections.singletonList(chargingSession));
         });
 

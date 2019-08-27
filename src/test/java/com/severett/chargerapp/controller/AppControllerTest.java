@@ -94,6 +94,7 @@ class AppControllerTest {
 
     @Test
     void badStopSession() {
+        //noinspection ConstantConditions
         when(sessionService.stopSession(not(eq(uuidTwo)), any(Instant.class)))
                 .thenThrow(IllegalArgumentException.class);
         ResponseEntity<ChargingSession> response = appController.stopChargingSession(uuidThree.toString());
